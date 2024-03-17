@@ -1,0 +1,135 @@
+buildscript {
+    repositories {
+        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
+    }
+}
+
+plugins {
+    id 'net.minecraftforge.gradle' version '5.1.+'
+    id("org.jetbrains.kotlin.jvm") version "1.9.20-RC"
+}
+
+apply plugin: 'org.spongepowered.mixin'
+group = 'dev.zanckor'
+version = '1.0.0'
+
+java {
+    archivesBaseName = 'cobblemonriding'
+    toolchain.languageVersion = JavaLanguageVersion.of(17)
+}
+
+minecraft {
+    mappings channel: 'official', version: '1.20.1'
+    runs {
+        client {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            property 'forge.enabledGameTestNamespaces', 'cobblemonriding'
+
+            mods {
+                cobblemonriding {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        server {
+            workingDirectory project.file('run')
+
+            property 'forge.logging.markers', 'REGISTRIES'
+
+            property 'forge.logging.console.level', 'debug'
+
+                        property 'forge.enabledGameTestNamespaces', 'cobblemonriding'
+
+            mods {
+                cobblemonriding {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        gameTestServer {
+            workingDirectory project.file('run')
+
+            property 'forge.logging.markers', 'REGISTRIES'
+
+            property 'forge.logging.console.level', 'debug'
+
+            property 'forge.enabledGameTestNamespaces', 'cobblemonriding'
+
+            mods {
+                cobblemonriding {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        data {
+            workingDirectory project.file('run')
+
+            property 'forge.logging.markers', 'REGISTRIES'
+
+            property 'forge.logging.console.level', 'debug'
+
+            args '--mod', 'cobblemonriding', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+
+            mods {
+                cobblemonriding {
+                    source sourceSets.main
+                }
+            }
+        }
+    }
+}
+
+mixin {
+    add sourceSets.main, "cobblemonriding.refmap.json"
+
+    config "cobblemonriding.mixins.json"
+}
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+repositories {
+    maven {
+        url "https://cursemaven.com"
+        content {
+            includeGroup "curse.maven"
+        }
+    }
+    maven { url = uri("https://thedarkcolour.github.io/KotlinForForge/") }
+}
+
+dependencies {
+    minecraft 'net.minecraftforge:forge:1.20.1-47.2.17'
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+    implementation fg.deobf("thedarkcolour:kotlinforforge:4.9.0")
+
+    implementation fg.deobf("curse.maven:cobblemon-687131:4977476")
+}
+
+jar {
+    manifest {
+        attributes([
+                "Specification-Title": "cobblemonriding",
+                            "Specification-Vendor": "Zanckor",
+                            "Specification-Version": "1",
+                "Implementation-Title": project.name,
+                "Implementation-Version": project.jar.archiveVersion,
+                            "Implementation-Vendor": "Zanckor",
+                            "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
+}
+
+jar.finalizedBy('reobfJar')
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
