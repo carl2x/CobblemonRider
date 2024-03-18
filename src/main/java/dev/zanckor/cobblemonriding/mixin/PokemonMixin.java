@@ -16,9 +16,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.PlayerRideableJumping;
 import net.minecraft.world.entity.TamableAnimal;
-import net.minecraft.world.entity.ai.control.JumpControl;
 import net.minecraft.world.entity.animal.ShoulderRidingEntity;
-import net.minecraft.world.entity.animal.horse.Horse;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -69,6 +67,7 @@ public abstract class PokemonMixin extends TamableAnimal implements PlayerRideab
                 flyingHandler();
 
             passenger.getPersistentData().putBoolean("press_space", false);
+            passenger.getPersistentData().putBoolean("press_sprint", false);
         } else {
             super.travel(pos);
         }
@@ -87,46 +86,53 @@ public abstract class PokemonMixin extends TamableAnimal implements PlayerRideab
         if ((passengerObject.getMountTypes().contains(SWIM) && isInWater())
                 || (passengerObject.getMountTypes().contains(FLY) && !onGround())
                 || (passengerObject.getMountTypes().contains(WALK))) {
-            if(passengerObject.getMountTypes().contains(WALK) && passenger.getPersistentData().getBoolean("press_space") && onGround()) {
-                jumpFromGround();
+            if (passengerObject.getMountTypes().contains(WALK) && onGround()) {
+
+
+                if (isSpacePressed()){
+                    jumpFromGround();
+                }
+
+                if (isSprintPressed()) {
+                    modifierSpeed *= 1.5f;
+                }
             }
 
             setDeltaMovement(x * modifierSpeed, getDeltaMovement().y, z * modifierSpeed);
-        }
-
-        if (getDelegate() instanceof PokemonClientDelegate del && del.getPose() != null && !del.getPose().equalsIgnoreCase("walk")) {
-            del.setPose("walk");
         }
 
         super.travel(new Vec3(x, pos.y, z));
     }
 
     void swimmingHandler() {
-        CompoundTag tag = passenger.getPersistentData();
-        float distanceToSurface = getDistanceToSurface(this);
-
-        if (getIsSubmerged()) {
+        if (isInWater()) {
             if (getDelegate() instanceof PokemonClientDelegate) {
                 ((PokemonClientDelegate) getDelegate()).setPose("swim");
             }
 
-            if (distanceToSurface > 0) {
-                double waterEmergeSpeed = tag.contains("press_space") && tag.getBoolean("press_space") ? 0.5 : 0.0025;
-                setAirSupply(getMaxAirSupply());
+            double waterEmergeSpeed = isSpacePressed() ? 0.5 : passenger.isShiftKeyDown() ? -0.25 : 0.02;
+            setAirSupply(getMaxAirSupply());
+            passenger.setAirSupply(passenger.getMaxAirSupply());
 
-                setDeltaMovement(getDeltaMovement().x, waterEmergeSpeed, getDeltaMovement().z);
+            setDeltaMovement(getDeltaMovement().x, waterEmergeSpeed, getDeltaMovement().z);
+
+            if(getDistanceToSurface(this) <= 0.5 && passenger.isShiftKeyDown()) {
+                moveTo(getX(), getY() - 0.1, getZ());
             }
         }
     }
 
     void flyingHandler() {
-        CompoundTag tag = passenger.getPersistentData();
-        boolean increaseAltitude = tag.contains("press_space") && tag.getBoolean("press_space");
+        boolean increaseAltitude = isSpacePressed();
         boolean decreaseAltitude = passenger.isShiftKeyDown();
 
         if (!onGround() || increaseAltitude) {
             double altitudeIncreaseValue = increaseAltitude ? 0.3 : decreaseAltitude ? -0.3 : 0.025;
             setDeltaMovement(getDeltaMovement().x, altitudeIncreaseValue, getDeltaMovement().z);
+        }
+
+        if (getDelegate() instanceof PokemonClientDelegate) {
+            ((PokemonClientDelegate) getDelegate()).setPose("swim");
         }
     }
 
@@ -139,7 +145,8 @@ public abstract class PokemonMixin extends TamableAnimal implements PlayerRideab
             if (pokemonRideConfigFile != null)
                 pokemonRideConfig = new String(Files.readAllBytes(pokemonRideConfigFile.toPath()));
         } catch (IOException e) {
-            System.out.println("Error reading cobblemon pokemon ride config file" + pokemonRideConfigFile);
+            CobblemonRiding.LOGGER.info("Error reading cobblemon pokemon ride config file" + pokemonRideConfigFile);
+            
             return null;
         }
 
@@ -197,7 +204,7 @@ public abstract class PokemonMixin extends TamableAnimal implements PlayerRideab
 
             passenger.moveTo(xPos, yPos, zPos);
 
-            if ((passenger.isShiftKeyDown() && getDistanceToSurface(this) >= 0) || (getPassengers().isEmpty()) && passenger != null) {
+            if ((passenger.isShiftKeyDown() && getDistanceToSurface(this) >= 0 && !isInWater()) || (getPassengers().isEmpty()) && passenger != null) {
                 passenger.stopRiding();
                 passenger = null;
             }
@@ -221,5 +228,14 @@ public abstract class PokemonMixin extends TamableAnimal implements PlayerRideab
                 passenger = player;
             }
         }
+    }
+
+
+    private boolean isSpacePressed() {
+        return passenger != null && passenger.getPersistentData().contains("press_space") && passenger.getPersistentData().getBoolean("press_space");
+    }
+
+    private boolean isSprintPressed() {
+        return passenger != null && passenger.getPersistentData().contains("press_sprint") && passenger.getPersistentData().getBoolean("press_sprint");
     }
 }

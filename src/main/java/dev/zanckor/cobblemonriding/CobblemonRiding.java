@@ -293,17 +293,17 @@ public class CobblemonRiding {
                             new ArrayList<>(Arrays.asList(0.0f, 1.0f, 0.0f))));
 
             if(pokemonRideConfig.exists()) {
-                System.out.println("Cobblemon pokemon ride config file already exists at " + pokemonRideConfig);
+                LOGGER.info("Cobblemon pokemon ride config file already exists at " + pokemonRideConfig);
             } else {
                 try (FileWriter file = new FileWriter(pokemonRideConfig)) {
                     file.write(new GsonBuilder().setPrettyPrinting().create().toJson(pokemonJsonObject));
-                    System.out.println("File created: " + pokemonRideConfig.getName());
+                    LOGGER.info("File created: " + pokemonRideConfig.getName());
 
-                    System.out.println("Cobblemon pokemon ride config file created at " + pokemonRideConfig);
+                    LOGGER.info("Cobblemon pokemon ride config file created at " + pokemonRideConfig);
                 } catch (
                         IOException ex) {
                     ex.printStackTrace();
-                    System.out.println("Error creating cobblemon pokemon ride config file" + pokemonRideConfig);
+                    LOGGER.info("Error creating cobblemon pokemon ride config file" + pokemonRideConfig);
                 }
             }
         }

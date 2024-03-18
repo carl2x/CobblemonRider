@@ -3,6 +3,7 @@ package dev.zanckor.cobblemonriding.event;
 import dev.zanckor.cobblemonriding.network.NetworkUtil;
 import dev.zanckor.cobblemonriding.network.packet.KeyEvent;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.Options;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
@@ -20,10 +21,16 @@ public class PlayerEvent {
     @SubscribeEvent
     public static void onPlayerJump(TickEvent.ClientTickEvent e) {
         Player player = Minecraft.getInstance().player;
+        Options options = Minecraft.getInstance().options;
 
-        if (Minecraft.getInstance().options.keyJump.isDown()) {
-            NetworkUtil.TO_SERVER(new KeyEvent());
+        if (options.keyJump.isDown()) {
+            NetworkUtil.TO_SERVER(new KeyEvent(KeyEvent.Key.SPACE));
             Objects.requireNonNull(player).getPersistentData().putBoolean("press_space", true);
+        }
+
+        if(options.keySprint.isDown()) {
+            NetworkUtil.TO_SERVER(new KeyEvent(KeyEvent.Key.SPRINT));
+            Objects.requireNonNull(player).getPersistentData().putBoolean("press_sprint", true);
         }
     }
 }

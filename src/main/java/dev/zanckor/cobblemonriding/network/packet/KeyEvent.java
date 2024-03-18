@@ -8,27 +8,40 @@ import net.minecraftforge.network.NetworkEvent;
 import java.util.Objects;
 import java.util.function.Supplier;
 
+import static dev.zanckor.cobblemonriding.network.packet.KeyEvent.Key;
+
 public class KeyEvent {
+    private Key key;
 
-
-    public KeyEvent() {
+    public KeyEvent(Key key) {
+        this.key = key;
     }
 
     public KeyEvent(FriendlyByteBuf buffer) {
+        key = buffer.readEnum(Key.class);
     }
 
     public void encodeBuffer(FriendlyByteBuf buffer) {
+        buffer.writeEnum(this.key);
     }
-
 
     public static void handler(KeyEvent msg, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
             ServerPlayer player = ctx.get().getSender();
 
             CompoundTag tag = Objects.requireNonNull(player).getPersistentData();
-            tag.putBoolean("press_space", true);
+
+            switch (msg.key) {
+                case SPACE -> tag.putBoolean("press_space", true);
+                case SPRINT -> tag.putBoolean("press_sprint", true);
+            }
         });
 
         ctx.get().setPacketHandled(true);
+    }
+
+    public enum Key {
+        SPACE,
+        SPRINT;
     }
 }
