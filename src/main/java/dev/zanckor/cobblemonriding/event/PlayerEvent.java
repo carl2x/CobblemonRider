@@ -1,5 +1,7 @@
 package dev.zanckor.cobblemonriding.event;
 
+import com.cobblemon.mod.common.Cobblemon;
+import dev.zanckor.cobblemonriding.CobblemonRiding;
 import dev.zanckor.cobblemonriding.network.NetworkUtil;
 import dev.zanckor.cobblemonriding.network.packet.KeyEvent;
 import net.minecraft.client.Minecraft;
@@ -31,6 +33,11 @@ public class PlayerEvent {
         if(options.keySprint.isDown()) {
             NetworkUtil.TO_SERVER(new KeyEvent(KeyEvent.Key.SPRINT));
             Objects.requireNonNull(player).getPersistentData().putBoolean("press_sprint", true);
+        }
+
+        if(CobblemonRiding.ClientEventHandlerRegister.pokemonDismount.isDown()){
+            NetworkUtil.TO_SERVER(new KeyEvent(KeyEvent.Key.POKEMON_DISMOUNT));
+            Objects.requireNonNull(player).getPersistentData().putBoolean("pokemon_dismount", true);
         }
     }
 }

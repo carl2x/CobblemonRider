@@ -41,10 +41,6 @@ public abstract class PokemonMixin extends TamableAnimal implements PlayerRideab
     PokemonJsonObject.PokemonConfigData passengerObject;
     @Shadow
     private Pokemon pokemon;
-
-    @Shadow
-    public abstract boolean getIsSubmerged();
-
     @Shadow
     public abstract PokemonSideDelegate getDelegate();
 
@@ -60,14 +56,17 @@ public abstract class PokemonMixin extends TamableAnimal implements PlayerRideab
         if (passengerObject != null && passenger != null) {
             travelHandler(pos);
 
-            if (passengerObject.getMountTypes().contains(SWIM))
+            if (passengerObject.getMountTypes().contains(SWIM)) {
                 swimmingHandler();
+            }
 
             if (passengerObject.getMountTypes().contains(FLY))
                 flyingHandler();
 
+
             passenger.getPersistentData().putBoolean("press_space", false);
             passenger.getPersistentData().putBoolean("press_sprint", false);
+            passenger.getPersistentData().putBoolean("pokemon_dismount", false);
         } else {
             super.travel(pos);
         }
@@ -96,6 +95,10 @@ public abstract class PokemonMixin extends TamableAnimal implements PlayerRideab
                 if (isSprintPressed()) {
                     modifierSpeed *= 1.5f;
                 }
+
+                if (getDelegate() instanceof PokemonClientDelegate) {
+                    ((PokemonClientDelegate) getDelegate()).setPose("swim");
+                }
             }
 
             setDeltaMovement(x * modifierSpeed, getDeltaMovement().y, z * modifierSpeed);
@@ -106,10 +109,6 @@ public abstract class PokemonMixin extends TamableAnimal implements PlayerRideab
 
     void swimmingHandler() {
         if (isInWater()) {
-            if (getDelegate() instanceof PokemonClientDelegate) {
-                ((PokemonClientDelegate) getDelegate()).setPose("swim");
-            }
-
             double waterEmergeSpeed = isSpacePressed() ? 0.5 : passenger.isShiftKeyDown() ? -0.25 : 0.02;
             setAirSupply(getMaxAirSupply());
             passenger.setAirSupply(passenger.getMaxAirSupply());
@@ -129,10 +128,6 @@ public abstract class PokemonMixin extends TamableAnimal implements PlayerRideab
         if (!onGround() || increaseAltitude) {
             double altitudeIncreaseValue = increaseAltitude ? 0.3 : decreaseAltitude ? -0.3 : 0.025;
             setDeltaMovement(getDeltaMovement().x, altitudeIncreaseValue, getDeltaMovement().z);
-        }
-
-        if (getDelegate() instanceof PokemonClientDelegate) {
-            ((PokemonClientDelegate) getDelegate()).setPose("swim");
         }
     }
 
@@ -204,7 +199,7 @@ public abstract class PokemonMixin extends TamableAnimal implements PlayerRideab
 
             passenger.moveTo(xPos, yPos, zPos);
 
-            if ((passenger.isShiftKeyDown() && getDistanceToSurface(this) >= 0 && !isInWater()) || (getPassengers().isEmpty()) && passenger != null) {
+            if ((isPokemonDismountPressed()) || (getPassengers().isEmpty())) {
                 passenger.stopRiding();
                 passenger = null;
             }
@@ -226,6 +221,10 @@ public abstract class PokemonMixin extends TamableAnimal implements PlayerRideab
             if (passengerObject != null) {
                 player.startRiding(this);
                 passenger = player;
+
+                player.getPersistentData().putBoolean("press_space", false);
+                player.getPersistentData().putBoolean("press_sprint", false);
+                player.getPersistentData().putBoolean("pokemon_dismount", false);
             }
         }
     }
@@ -237,5 +236,9 @@ public abstract class PokemonMixin extends TamableAnimal implements PlayerRideab
 
     private boolean isSprintPressed() {
         return passenger != null && passenger.getPersistentData().contains("press_sprint") && passenger.getPersistentData().getBoolean("press_sprint");
+    }
+
+    private boolean isPokemonDismountPressed() {
+        return passenger != null && passenger.getPersistentData().contains("pokemon_dismount") && passenger.getPersistentData().getBoolean("pokemon_dismount");
     }
 }

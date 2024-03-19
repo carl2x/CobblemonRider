@@ -8,10 +8,8 @@ import net.minecraftforge.network.NetworkEvent;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-import static dev.zanckor.cobblemonriding.network.packet.KeyEvent.Key;
-
 public class KeyEvent {
-    private Key key;
+    private final Key key;
 
     public KeyEvent(Key key) {
         this.key = key;
@@ -34,6 +32,7 @@ public class KeyEvent {
             switch (msg.key) {
                 case SPACE -> tag.putBoolean("press_space", true);
                 case SPRINT -> tag.putBoolean("press_sprint", true);
+                case POKEMON_DISMOUNT -> tag.putBoolean("pokemon_dismount", true);
             }
         });
 
@@ -42,6 +41,7 @@ public class KeyEvent {
 
     public enum Key {
         SPACE,
-        SPRINT;
+        SPRINT,
+        POKEMON_DISMOUNT
     }
 }

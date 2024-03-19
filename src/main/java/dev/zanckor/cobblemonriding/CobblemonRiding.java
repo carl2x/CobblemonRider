@@ -1,10 +1,14 @@
 package dev.zanckor.cobblemonriding;
 
 import com.google.gson.GsonBuilder;
+import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.logging.LogUtils;
 import dev.zanckor.cobblemonriding.config.PokemonJsonObject;
 import dev.zanckor.cobblemonriding.network.NetworkHandler;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.world.level.storage.LevelResource;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -306,6 +310,29 @@ public class CobblemonRiding {
                     LOGGER.info("Error creating cobblemon pokemon ride config file" + pokemonRideConfig);
                 }
             }
+        }
+    }
+
+
+
+    @Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+    public static class ClientEventHandlerRegister {
+
+        public static KeyMapping pokemonDismount;
+
+        public static KeyMapping registerKey(String name, int keycode) {
+            LOGGER.debug("Registering keys");
+
+            final var key = new KeyMapping("key." + MODID + "." + name, keycode, "key.categories.CobblemonRiding");
+
+            return key;
+        }
+
+        @SubscribeEvent
+        public static void keyInit(RegisterKeyMappingsEvent e) {
+            pokemonDismount = registerKey("Pokemon Dismount", InputConstants.KEY_K);
+
+            e.register(pokemonDismount);
         }
     }
 }
