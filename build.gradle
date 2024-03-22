@@ -18,7 +18,7 @@ group = 'dev.zanckor'
 version = '1.0.0'
 
 java {
-    archivesBaseName = 'cobblemonriding'
+    archivesBaseName = 'cobblemonrider'
     toolchain.languageVersion = JavaLanguageVersion.of(17)
 }
 
@@ -29,13 +29,18 @@ minecraft {
             workingDirectory project.file('run')
             property 'forge.logging.markers', 'REGISTRIES'
             property 'forge.logging.console.level', 'debug'
-            property 'forge.enabledGameTestNamespaces', 'cobblemonriding'
+            property 'forge.enabledGameTestNamespaces', 'cobblemonrider'
 
             mods {
-                cobblemonriding {
+                cobblemonrider {
                     source sourceSets.main
                 }
             }
+        }
+
+        clientalt {
+            parent runs.client
+            args '--username', 'Zanckor'
         }
 
         server {
@@ -45,10 +50,10 @@ minecraft {
 
             property 'forge.logging.console.level', 'debug'
 
-                        property 'forge.enabledGameTestNamespaces', 'cobblemonriding'
+                        property 'forge.enabledGameTestNamespaces', 'cobblemonrider'
 
             mods {
-                cobblemonriding {
+                cobblemonrider {
                     source sourceSets.main
                 }
             }
@@ -61,10 +66,10 @@ minecraft {
 
             property 'forge.logging.console.level', 'debug'
 
-            property 'forge.enabledGameTestNamespaces', 'cobblemonriding'
+            property 'forge.enabledGameTestNamespaces', 'cobblemonrider'
 
             mods {
-                cobblemonriding {
+                cobblemonrider {
                     source sourceSets.main
                 }
             }
@@ -77,10 +82,10 @@ minecraft {
 
             property 'forge.logging.console.level', 'debug'
 
-            args '--mod', 'cobblemonriding', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+            args '--mod', 'cobblemonrider', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
 
             mods {
-                cobblemonriding {
+                cobblemonrider {
                     source sourceSets.main
                 }
             }
@@ -89,9 +94,9 @@ minecraft {
 }
 
 mixin {
-    add sourceSets.main, "cobblemonriding.refmap.json"
+    add sourceSets.main, "cobblemonrider.refmap.json"
 
-    config "cobblemonriding.mixins.json"
+    config "cobblemonrider.mixins.json"
 }
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }
@@ -117,7 +122,7 @@ dependencies {
 jar {
     manifest {
         attributes([
-                "Specification-Title": "cobblemonriding",
+                "Specification-Title": "cobblemonrider",
                             "Specification-Vendor": "Zanckor",
                             "Specification-Version": "1",
                 "Implementation-Title": project.name,

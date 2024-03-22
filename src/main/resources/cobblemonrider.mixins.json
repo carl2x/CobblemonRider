@@ -1,9 +1,9 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "dev.zanckor.cobblemonriding.mixin",
+  "package": "dev.zanckor.cobblemonrider.mixin",
   "compatibilityLevel": "JAVA_8",
-  "refmap": "cobblemonriding.refmap.json",
+  "refmap": "cobblemonrider.refmap.json",
   "mixins": [
     "PlayerMixin",
     "PokemonMixin"

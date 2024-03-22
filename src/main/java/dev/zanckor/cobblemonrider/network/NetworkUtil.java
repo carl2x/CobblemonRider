@@ -1,4 +1,4 @@
-package dev.zanckor.cobblemonriding.network;
+package dev.zanckor.cobblemonrider.network;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;

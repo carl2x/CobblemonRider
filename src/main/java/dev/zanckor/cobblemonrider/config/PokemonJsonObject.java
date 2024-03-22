@@ -1,4 +1,4 @@
-package dev.zanckor.cobblemonriding.config;
+package dev.zanckor.cobblemonrider.config;
 
 
 import java.util.*;

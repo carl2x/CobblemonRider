@@ -1,10 +1,11 @@
-package dev.zanckor.cobblemonriding;
+package dev.zanckor.cobblemonrider;
 
+import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.logging.LogUtils;
-import dev.zanckor.cobblemonriding.config.PokemonJsonObject;
-import dev.zanckor.cobblemonriding.network.NetworkHandler;
+import dev.zanckor.cobblemonrider.config.PokemonJsonObject;
+import dev.zanckor.cobblemonrider.network.NetworkHandler;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraftforge.api.distmarker.Dist;
@@ -20,21 +21,23 @@ import org.slf4j.Logger;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static dev.zanckor.cobblemonriding.config.PokemonJsonObject.MountType.*;
+import static dev.zanckor.cobblemonrider.config.PokemonJsonObject.MountType.*;
 
-@Mod(CobblemonRiding.MODID)
-public class CobblemonRiding {
-    public static final String MODID = "cobblemonriding";
+@Mod(CobblemonRider.MODID)
+public class CobblemonRider {
+    public static final String MODID = "cobblemonrider";
     public static final Logger LOGGER = LogUtils.getLogger();
     public static File PokemonRideConfigFile;
+    public static PokemonJsonObject pokemonJsonObject;
 
-    public CobblemonRiding() {
+    public CobblemonRider() {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
         MinecraftForge.EVENT_BUS.register(this);
 
@@ -55,11 +58,6 @@ public class CobblemonRiding {
             PokemonRideConfigFile = pokemonRideConfig;
 
             PokemonJsonObject pokemonJsonObject = new PokemonJsonObject();
-
-            pokemonJsonObject.add("Bulbasaur",
-                    new PokemonJsonObject.PokemonConfigData(
-                            new ArrayList<>(List.of(WALK)),
-                            new ArrayList<>(Arrays.asList(0.0f, 0.0f, 0.0f))));
 
             pokemonJsonObject.add("Charizard",
                     new PokemonJsonObject.PokemonConfigData(
@@ -296,7 +294,7 @@ public class CobblemonRiding {
                             new ArrayList<>(List.of(WALK)),
                             new ArrayList<>(Arrays.asList(0.0f, 1.0f, 0.0f))));
 
-            if(pokemonRideConfig.exists()) {
+            if (pokemonRideConfig.exists()) {
                 LOGGER.info("Cobblemon pokemon ride config file already exists at " + pokemonRideConfig);
             } else {
                 try (FileWriter file = new FileWriter(pokemonRideConfig)) {
@@ -310,9 +308,17 @@ public class CobblemonRiding {
                     LOGGER.info("Error creating cobblemon pokemon ride config file" + pokemonRideConfig);
                 }
             }
+
+            String pokemonRideConfigObject;
+
+            try {
+                pokemonRideConfigObject = new String(Files.readAllBytes(pokemonRideConfig.toPath()));
+                CobblemonRider.pokemonJsonObject = new Gson().fromJson(pokemonRideConfigObject, PokemonJsonObject.class);;
+            } catch (IOException ex) {
+                CobblemonRider.LOGGER.info("Error reading cobblemon pokemon ride config file" + pokemonRideConfig);
+            }
         }
     }
-
 
 
     @Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
@@ -323,7 +329,7 @@ public class CobblemonRiding {
         public static KeyMapping registerKey(String name, int keycode) {
             LOGGER.debug("Registering keys");
 
-            final var key = new KeyMapping("key." + MODID + "." + name, keycode, "key.categories.CobblemonRiding");
+            final var key = new KeyMapping("key." + MODID + "." + name, keycode, "key.categories.Cobblemounts");
 
             return key;
         }

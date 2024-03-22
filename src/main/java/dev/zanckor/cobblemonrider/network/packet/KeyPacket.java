@@ -1,5 +1,6 @@
-package dev.zanckor.cobblemonriding.network.packet;
+package dev.zanckor.cobblemonrider.network.packet;
 
+import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -8,14 +9,14 @@ import net.minecraftforge.network.NetworkEvent;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-public class KeyEvent {
+public class KeyPacket {
     private final Key key;
 
-    public KeyEvent(Key key) {
+    public KeyPacket(Key key) {
         this.key = key;
     }
 
-    public KeyEvent(FriendlyByteBuf buffer) {
+    public KeyPacket(FriendlyByteBuf buffer) {
         key = buffer.readEnum(Key.class);
     }
 
@@ -23,7 +24,7 @@ public class KeyEvent {
         buffer.writeEnum(this.key);
     }
 
-    public static void handler(KeyEvent msg, Supplier<NetworkEvent.Context> ctx) {
+    public static void handler(KeyPacket msg, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
             ServerPlayer player = ctx.get().getSender();
 
@@ -32,7 +33,13 @@ public class KeyEvent {
             switch (msg.key) {
                 case SPACE -> tag.putBoolean("press_space", true);
                 case SPRINT -> tag.putBoolean("press_sprint", true);
-                case POKEMON_DISMOUNT -> tag.putBoolean("pokemon_dismount", true);
+                case POKEMON_DISMOUNT -> {
+
+                    if(player.getVehicle() != null && player.getVehicle() instanceof PokemonEntity) {
+                        tag.putBoolean("pokemon_dismount", true);
+                        player.stopRiding();
+                    }
+                }
             }
         });
 
