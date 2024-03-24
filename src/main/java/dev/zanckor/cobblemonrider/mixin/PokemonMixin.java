@@ -7,9 +7,10 @@ import com.cobblemon.mod.common.entity.pokemon.PokemonBehaviourFlag;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.google.gson.Gson;
-import dev.zanckor.cobblemonrider.CobblemonRider;
+import com.mojang.math.Axis;
 import dev.zanckor.cobblemonrider.MCUtil;
 import dev.zanckor.cobblemonrider.config.PokemonJsonObject;
+import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
@@ -21,6 +22,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
+import org.joml.Quaternionf;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -70,13 +73,20 @@ public abstract class PokemonMixin extends TamableAnimal {
     }
 
     @Override
-    protected void positionRider(Entity entity, MoveFunction moveFunction) {
+    protected void positionRider(@NotNull Entity entity, @NotNull MoveFunction moveFunction) {
         if (this.hasPassenger(entity)) {
             PokemonJsonObject.PokemonConfigData passengerObject = MCUtil.getPassengerObject(getPokemon().getSpecies().getName());
             ArrayList<Float> offSet = passengerObject != null ? passengerObject.getOffSet() : new ArrayList<>(Arrays.asList(0.0f, 0.0f, 0.0f));
-            
-            double d0 = this.getY();
-            moveFunction.accept(entity, this.getX() + offSet.get(0), d0 + offSet.get(1), this.getZ() + offSet.get(2));
+
+            setYBodyRot(entity.getYRot());
+
+            float xOffset = offSet.get(2);
+            float yOffset = offSet.get(1);
+            float zOffset = offSet.get(0);
+
+            Vec3 vec3 = (new Vec3(xOffset, yOffset, zOffset)).yRot(-entity.getYRot() * 0.017453292F);
+
+            moveFunction.accept(entity, getX() + vec3.x, getY() + vec3.y, getZ() + vec3.z);
         }
     }
 
@@ -98,6 +108,7 @@ public abstract class PokemonMixin extends TamableAnimal {
                 passenger.getPersistentData().putBoolean("press_space", false);
                 passenger.getPersistentData().putBoolean("press_sprint", false);
                 passenger.getPersistentData().putBoolean("pokemon_dismount", false);
+                passenger.setShiftKeyDown(false);
             }
         }
     }
@@ -121,8 +132,8 @@ public abstract class PokemonMixin extends TamableAnimal {
                 }
             }
 
-            if (passenger.isShiftKeyDown()) {
-                modifierSpeed *= 0.3f;
+            if (isSprintPressed()) {
+                modifierSpeed *= 2.5f;
             }
 
             setDeltaMovement(x * modifierSpeed, getDeltaMovement().y, z * modifierSpeed);
@@ -133,13 +144,13 @@ public abstract class PokemonMixin extends TamableAnimal {
 
     void swimmingHandler() {
         if (isInWater()) {
-            double waterEmergeSpeed = isSpacePressed() ? 0.5 : isDescendPressed() ? -0.25 : 0.02;
+            double waterEmergeSpeed = isSpacePressed() ? 0.5 : passenger.isShiftKeyDown() ? -0.25 : 0;
             setAirSupply(getMaxAirSupply());
             passenger.setAirSupply(passenger.getMaxAirSupply());
 
             setDeltaMovement(getDeltaMovement().x, waterEmergeSpeed, getDeltaMovement().z);
 
-            if (getDistanceToSurface(this) <= 0.5 && isDescendPressed()) {
+            if (getDistanceToSurface(this) <= 0.5 && passenger.isShiftKeyDown()) {
                 moveTo(getX(), getY() - 0.1, getZ());
             }
         }
@@ -147,10 +158,10 @@ public abstract class PokemonMixin extends TamableAnimal {
 
     void flyingHandler() {
         boolean increaseAltitude = isSpacePressed();
-        boolean decreaseAltitude = isDescendPressed();
+        boolean decreaseAltitude = passenger.isShiftKeyDown();
 
         if ((!onGround() || increaseAltitude) && getPokemon().getEntity() != null) {
-            double altitudeIncreaseValue = increaseAltitude ? 0.3 : decreaseAltitude ? -0.3 : -0.0005;
+            double altitudeIncreaseValue = increaseAltitude ? 0.3 : decreaseAltitude ? -0.3 : 0;
             setDeltaMovement(getDeltaMovement().x, altitudeIncreaseValue, getDeltaMovement().z);
             getPokemon().getEntity().setBehaviourFlag(PokemonBehaviourFlag.FLYING, true);
         }
@@ -193,7 +204,7 @@ public abstract class PokemonMixin extends TamableAnimal {
     @Inject(method = "mobInteract", at = @At("HEAD"))
     public void mobInteract(Player player, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
         // On player interaction, if the player is not already riding the entity, add the player as a passenger
-        if (canAddPassenger(player) && Objects.equals(getPokemon().getOwnerPlayer(), player)) {
+        if (canAddPassenger(player) && Objects.equals(getPokemon().getOwnerPlayer(), player) && player.getMainHandItem().isEmpty()) {
             passengerObject = MCUtil.getPassengerObject(getPokemon().getSpecies().getName());
 
             if (passengerObject != null) {
@@ -224,7 +235,7 @@ public abstract class PokemonMixin extends TamableAnimal {
         return passenger != null && passenger.getPersistentData().contains("press_space") && passenger.getPersistentData().getBoolean("press_space");
     }
 
-    private boolean isDescendPressed() {
+    private boolean isSprintPressed() {
         return passenger != null && passenger.getPersistentData().contains("press_sprint") && passenger.getPersistentData().getBoolean("press_sprint");
     }
 

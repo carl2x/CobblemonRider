@@ -26,7 +26,7 @@ public abstract class PlayerMixin extends Entity {
     public void shouldDismount(CallbackInfo ci) {
         Entity vehicle = this.getVehicle();
 
-        if (vehicle instanceof PokemonEntity && !vehicle.isRemoved() && (!checkShouldDismount() || isShiftKeyDown())) {
+        if ((vehicle instanceof PokemonEntity && !vehicle.isRemoved() && !checkShouldDismount()) || isShiftKeyDown()) {
             ci.cancel();
         }
     }
